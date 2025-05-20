@@ -5,7 +5,9 @@ class ApiError extends Error {
     this.data = null;
     this.success = false;
     this.errors = errors;
-    this.message = message;
+    this.message = message
+
+  }}
     
 // if (stack) {
 //       this.stack = stack;
@@ -14,8 +16,7 @@ class ApiError extends Error {
 //       Error.captureStackTrace(this, this.constructor);
 //     }
 
-  }
-}
+
 // const asyncHandler = (requestHandler) => {
 //   return (req, res, next) => {
 //     Promise.resolve(requestHandler(req, res, next)).catch((err) => {
@@ -27,5 +28,5 @@ class ApiError extends Error {
 //   }
 // }
 
-export default ApiError
+export { ApiError }
 // export { asyncHandler }

@@ -10,4 +10,6 @@ const storage = multer.diskStorage({     // Configure storage for uploaded files
   }
 })
 
+
+
 export const upload = multer({ storage: storage })  // Create a multer instance with the defined storage configuration
