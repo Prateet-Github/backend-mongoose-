@@ -1,6 +1,8 @@
 import {asyncHandler} from '../utils/asyncHandler.js'
 import {ApiError} from '../utils/ApiError.js'
 import { User } from '../models/user.model.js'
+import { uploadOnCloudinary } from '../utils/cloudinary.js'
+import { ApiResponse } from '../utils/ApiResponse.js'
 
 
 const registerUser = asyncHandler( async (req,res) => {
@@ -27,7 +29,46 @@ const existedUser =  User.findOne({$or: [{ username }, { email }]})
 if (existedUser) {
   throw new ApiError('User already exists', 409)
 }
-  //  res.status(200).json({
+
+
+const avatarLocalPath =  req.files?.avatar?.[0] && req.files.avatar[0].path  
+const coverImageLocalPath =  req.files?.coverImage?.[0] && req.files.coverImage[0].path
+
+if (!avatarLocalPath) {
+  throw new ApiError('Avatar is required', 400)
+}
+
+const avatar =  await uploadOnCloudinary(avatarLocalPath)
+const coverImage =  await uploadOnCloudinary(coverImageLocalPath)
+
+if (!avatar) {
+  throw new ApiError('Avatar upload failed', 500)
+  
+}
+ const user = await User.create({
+  email,
+  password,
+  username : username.toLowerCase(),
+  fullName,
+  avatar: avatar.url,
+  coverImage: coverImage?.url || "" // optional if coverimage then url if bot then empty string to tackle any error
+ })
+
+const createdUser = await User.findById(user._id).select('-password -refreshToken') // remove password and refresh token from response
+
+if (!createdUser) {  // remove local files
+  throw new ApiError('User creation failed', 500)
+}
+
+return res.status(201).json(
+  new ApiResponse (200, 'User created successfully', createdUser)
+  // message: 'User created successfully',
+  // data: createdUser
+  // success: true
+  // status: 201
+)
+
+//  res.status(200).json({
   //   message: "hey"
   // })
 })
