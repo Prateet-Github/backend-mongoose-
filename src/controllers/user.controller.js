@@ -24,15 +24,15 @@ if ([username, email, password, fullName].some((field) => field?.trim() === ''))
   throw new ApiError('All fields are required', 400)
 }
 
-const existedUser =  User.findOne({$or: [{ username }, { email }]})
+const existedUser = await User.findOne({$or: [{ username }, { email }]})
 
 if (existedUser) {
   throw new ApiError('User already exists', 409)
 }
 
 
-const avatarLocalPath =  req.files?.avatar?.[0] && req.files.avatar[0].path  
-const coverImageLocalPath =  req.files?.coverImage?.[0] && req.files.coverImage[0].path
+const avatarLocalPath =  req.files?.avatar[0]?.path  
+const coverImageLocalPath =  req.files?.coverImage[0]?.path
 
 if (!avatarLocalPath) {
   throw new ApiError('Avatar is required', 400)
@@ -48,9 +48,9 @@ if (!avatar) {
  const user = await User.create({
   email,
   password,
-  username : username.toLowerCase(),
+  username : username,
   fullName,
-  avatar: avatar.url,
+  avatar: avatar.url ,
   coverImage: coverImage?.url || "" // optional if coverimage then url if bot then empty string to tackle any error
  })
 
@@ -74,5 +74,3 @@ return res.status(201).json(
 })
 
 export {registerUser}
-
-
