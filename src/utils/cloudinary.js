@@ -17,10 +17,10 @@ import fs from 'fs'
                     public_id: 'shoes',
                     resource_type: 'auto', // Automatically detect the resource type
                 })
-        .then((uploadResult) => {
-            fs.unlinkSync(localFilePath); // Delete the local file after successful upload
-            return uploadResult;
-        })
+        // .then((uploadResult) => {
+        //     fs.unlinkSync(localFilePath); // Delete the local file after successful upload
+        //     return uploadResult;
+        // })
                 
                 .catch((error) => {
                     fs.unlinkSync(localFilePath); // Delete the local file if upload fails
