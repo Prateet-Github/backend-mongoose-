@@ -345,6 +345,72 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
     )
 })
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  
+  const { username } = req.params  // get user id from request parameters not req.body or req.user
+
+  if (!username?.trim) {
+    throw new ApiError('Username is required', 400)
+  }
+
+const channel = await User.aggregate([
+  {
+    $match: { username: username.trim() } // match user by username
+  },
+  {
+    $lookup: {
+      from: 'subscribers', // join with subscribers collection
+      localField: '_id', // user _id field
+      foreignField: 'channel', // video channel field
+      as: 'subscribers' // alias for subscribers
+    }
+  },{
+    $lookup: {
+      from: 'subscriptons', // join with subscriptions collection
+      localField: '_id', // user _id field
+      foreignField: 'subscriber', // subscription subscriber field
+      as: 'subscribedTo' // alias for subscribedTo
+    }
+  },
+  {
+    $addFields: {
+      subscriberCount: {$size: '$subscribers'}, // add subscriber count field
+      subscribedToCount: {$size: '$subscribedTo'}, // add subscribed to count field
+      isSubscribed: {
+        $cond: {
+          if: {$gt: [{$size: '$subscribedTo'}, 0]}, // check if subscribed to count is greater than 0
+          //without array method 
+          // if: {$in: [req.user._id, '$subscribedTo.subscriber']}, // check if user is subscribed
+          then: true, // if true then user is subscribed
+          else: false // if false then user is not subscribed
+        }
+      }
+    }
+  },
+  {
+    $project:{
+      fullName: 1,
+      username: 1,
+      avatar: 1,
+      coverImage: 1,
+      subscriberCount: 1,
+      subscribedToCount: 1,
+      isSubscribed: 1,
+      email: 1
+    }
+  }
+])
+
+if (!channel?.length) {
+  throw new ApiError('Channel does not exist', 404)
+}
+
+return res.status(200).json(
+  new ApiResponse(200, channel[0], 'Channel profile fetched successfully')
+) 
+
+})
+
 export {registerUser}
 export {loginUser}
 export {logoutUser}
@@ -355,3 +421,4 @@ export {updateAccountDetails}
 export {generateAccessTokenAndRefreshToken}
 export {updateUserAvatar}
 export {updateUserCoverImage}
+export {getUserChannelProfile}
