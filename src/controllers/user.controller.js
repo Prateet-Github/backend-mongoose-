@@ -411,6 +411,63 @@ return res.status(200).json(
 
 })
 
+const getWatchHistory = asyncHandler(async (req, res) => {
+  // get user id from req.user
+  // get watch history from user model
+  // send response
+
+  const user = await User.aggregate([
+    {
+      $match: { _id: new mongoose.Types.ObjectId(req.user._id) } // match user by id but here we use mongoose.Types.ObjectId to convert string to ObjectId
+    },
+    {
+      $lookup: {
+        from: 'videos', // join with videos collection
+        localField: 'watchHistory', // user watch history field
+        foreignField: '_id', // video _id field
+        as: 'watchHistory', // alias for watch history
+
+        pipeline:[{  // sub-pipeline to get video details
+          
+          $lookup:{
+            from: 'users', // join with users collection
+            localField: 'owner', // video owner field
+            foreignField: '_id', // user _id field
+            as: 'owner',// alias for channel
+            pipeline: [
+              {
+                $project: {
+                  fullName: 1,
+                  username: 1,
+                  avatar: 1
+                }
+              }
+            ]
+          }
+        },
+        {
+          $addFields:{
+            owner:{
+              $first: '$owner' // get first owner from array
+            }
+          }
+        }
+      
+      ]
+      }
+    },
+    {
+      $project: {
+        watchHistory: 1, // only return watch history field
+      }
+    }
+  ])
+
+  return res.status(200).json(
+    new ApiResponse(200, user[0].watchHistory, 'Watch history fetched successfully')
+  )
+}) 
+
 export {registerUser}
 export {loginUser}
 export {logoutUser}
@@ -422,3 +479,4 @@ export {generateAccessTokenAndRefreshToken}
 export {updateUserAvatar}
 export {updateUserCoverImage}
 export {getUserChannelProfile}
+export {getWatchHistory}
